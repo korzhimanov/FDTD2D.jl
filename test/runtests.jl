@@ -1,6 +1,7 @@
 import FDTD2D
 using Base.Test
 
+# Test FDTD2D.calculate_params
 function laser_pulse_gauss(x_min::Float64, width::Float64, duration::Float64)
   function f(t::Float64, x::Float64, y::Float64)
     return exp(-(y/width)^2)*exp(-((t - (x - x_min))/duration-2.0)^2)*sin(2.*pi*(t - x))
@@ -31,5 +32,19 @@ params_calculated = FDTD2D.calculate_params(params_correct)
 @test params_calculated["time_step"] == sqrt(2.0)/16.0
 @test params_calculated["half_cfl"]["x"] == 0.5*sqrt(0.5)
 @test params_calculated["half_cfl"]["y"] == 0.5*sqrt(0.5)
+
+# Test FDTD2D.init_data
+data_empty = Dict()
+for name in ("ex","ey","ezx","ezy","ez")
+  data_empty[name] = zeros(Float64, params_calculated["matrix_size"]["x"], params_calculated["matrix_size"]["y"])
+end
+for name in ("hx","hy","hzx","hzy","hz")
+  data_empty[name] = zeros(Float64, params_calculated["matrix_size"]["x"]-1, params_calculated["matrix_size"]["y"]-1)
+end
+
+data_test = FDTD2D.init_data(params_calculated)
+for name in ("ex","ey","ezx","ezy","ez","hx","hy","hzx","hzy","hz")
+  @test isequal(data_test,data_empty)
+end
 
 @time @test FDTD2D.run(params_correct) == true

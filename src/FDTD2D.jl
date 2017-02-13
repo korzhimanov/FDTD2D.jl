@@ -26,7 +26,14 @@ function calculate_params(init_params::Dict)
 end
 
 function init_data(params::Dict)
-  return Dict{String, Number}()
+  data = Dict{String, Array{Float64,2}}()
+  for name in ("ex","ey","ezx","ezy","ez")
+    data[name] = zeros(Float64, params["matrix_size"]["x"], params["matrix_size"]["y"])
+  end
+  for name in ("hx","hy","hzx","hzy","hz")
+    data[name] = zeros(Float64, params["matrix_size"]["x"]-1, params["matrix_size"]["y"]-1)
+  end
+  return data
 end
 
 """Generate fields at left boundary (x_min = p["x_bounds"][0]) at time moment 'time'"""
