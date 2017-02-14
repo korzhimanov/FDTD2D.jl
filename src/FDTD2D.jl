@@ -54,7 +54,25 @@ function generate_fields_x_min!(d::Dict, time::Float64, p::Dict)
 end
 
 function make_step!(d::Dict, p::Dict)
-  return true
+  for j = 2:p["matrix_size"]["y"]-1
+    for i = 2:p["matrix_size"]["x"]-1
+      d["ex"][i,j] += p["half_cfl"]["y"]*(d["hz"][i,j] + d["hz"][i-1,j] - d["hz"][i,j-1] - d["hz"][i-1,j-1])
+      d["ey"][i,j] -= p["half_cfl"]["x"]*(d["hz"][i,j] + d["hz"][i,j-1] - d["hz"][i-1,j] - d["hz"][i-1,j-1])
+      d["ezx"][i,j] += p["half_cfl"]["x"]*(d["hy"][i,j] + d["hy"][i,j-1] - d["hy"][i-1,j] - d["hy"][i-1,j-1])
+      d["ezy"][i,j] -= p["half_cfl"]["y"]*(d["hx"][i,j] + d["hx"][i-1,j] - d["hx"][i,j-1] - d["hx"][i-1,j-1])
+      d["ez"][i,j] = d["ezx"][i,j] + d["ezy"][i,j]
+    end
+  end
+
+  for j = 1:p["matrix_size"]["y"]-1
+    for i = 1:p["matrix_size"]["x"]-1
+      d["hx"][i,j] -= p["half_cfl"]["y"]*(d["ez"][i+1,j+1] + d["ez"][i,j+1] - d["ez"][i+1,j] - d["ez"][i,j])
+      d["hy"][i,j] += p["half_cfl"]["x"]*(d["ez"][i+1,j+1] + d["ez"][i+1,j] - d["ez"][i,j+1] - d["ez"][i,j])
+      d["hzx"][i,j] -= p["half_cfl"]["x"]*(d["ey"][i+1,j+1] + d["ey"][i+1,j] - d["ey"][i,j+1] - d["ey"][i,j])
+      d["hzy"][i,j] += p["half_cfl"]["y"]*(d["ex"][i+1,j+1] + d["ex"][i,j+1] - d["ex"][i+1,j] - d["ex"][i,j])
+      d["hz"][i,j] = d["hzx"][i,j] + d["hzy"][i,j]
+    end
+  end
 end
 
 function output(d::Dict, k::Int, p::Dict)
