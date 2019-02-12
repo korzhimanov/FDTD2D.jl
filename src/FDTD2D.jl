@@ -1,4 +1,5 @@
 module FDTD2D
+using Plots
 export run
 
 """Calculate parameters needed for simulation and return them as a dictionary."""
@@ -53,27 +54,55 @@ function generate_fields_x_min!(d, time, p)
   d["hz"][2,:] = d["hzx"][2,:] + d["hzy"][2,:]
 end
 
+"""Update E_x"""
+function update_ex!(ex, hz, v)
+  for j = 2:size(ex,2)-1
+    for i = 2:size(ex,1)-1
+      ex[i,j] += v*(hz[i,j] + hz[i-1,j] - hz[i,j-1] - hz[i-1,j-1])
+    end
+  end
+end
+
+"""Update E_y"""
+function update_ey!(ey, hz, v)
+  for j = 2:size(ey,2)-1
+    for i = 2:size(ey,1)-1
+      ey[i,j] -= v*(hz[i,j] - hz[i-1,j] + hz[i,j-1] - hz[i-1,j-1])
+    end
+  end
+end
+
+"""Update H_x"""
+function update_hx!(hx, ez, v)
+  for j = 1:size(hx,2)
+    for i = 1:size(hx,1)
+      hx[i,j] -= v*(ez[i+1,j+1] + ez[i,j+1] - ez[i+1,j] - ez[i,j])
+    end
+  end
+end
+
+"""Update H_y"""
+function update_hy!(hy, ez, v)
+  for j = 1:size(hy,2)
+    for i = 1:size(hy,1)
+      hy[i,j] += v*(ez[i+1,j+1] - ez[i,j+1] + ez[i+1,j] - ez[i,j])
+    end
+  end
+end
+
 """Make step"""
 function make_step!(d, p)
-  for j = 2:p["matrix_size"]["y"]-1
-    for i = 2:p["matrix_size"]["x"]-1
-      d["ex"][i,j] += p["half_cfl"]["y"]*(d["hz"][i,j] + d["hz"][i-1,j] - d["hz"][i,j-1] - d["hz"][i-1,j-1])
-      d["ey"][i,j] -= p["half_cfl"]["x"]*(d["hz"][i,j] + d["hz"][i,j-1] - d["hz"][i-1,j] - d["hz"][i-1,j-1])
-      d["ezx"][i,j] += p["half_cfl"]["x"]*(d["hy"][i,j] + d["hy"][i,j-1] - d["hy"][i-1,j] - d["hy"][i-1,j-1])
-      d["ezy"][i,j] -= p["half_cfl"]["y"]*(d["hx"][i,j] + d["hx"][i-1,j] - d["hx"][i,j-1] - d["hx"][i-1,j-1])
-      d["ez"][i,j] = d["ezx"][i,j] + d["ezy"][i,j]
-    end
-  end
+  update_ex!(d["ex"], d["hz"], p["half_cfl"]["y"])
+  update_ey!(d["ey"], d["hz"], p["half_cfl"]["x"])
+  update_ey!(d["ezx"], d["hy"], -p["half_cfl"]["x"])
+  update_ex!(d["ezy"], d["hx"], -p["half_cfl"]["y"])
+  d["ez"] = d["ezx"] + d["ezy"]
 
-  for j = 1:p["matrix_size"]["y"]-1
-    for i = 1:p["matrix_size"]["x"]-1
-      d["hx"][i,j] -= p["half_cfl"]["y"]*(d["ez"][i+1,j+1] + d["ez"][i,j+1] - d["ez"][i+1,j] - d["ez"][i,j])
-      d["hy"][i,j] += p["half_cfl"]["x"]*(d["ez"][i+1,j+1] + d["ez"][i+1,j] - d["ez"][i,j+1] - d["ez"][i,j])
-      d["hzx"][i,j] -= p["half_cfl"]["x"]*(d["ey"][i+1,j+1] + d["ey"][i+1,j] - d["ey"][i,j+1] - d["ey"][i,j])
-      d["hzy"][i,j] += p["half_cfl"]["y"]*(d["ex"][i+1,j+1] + d["ex"][i,j+1] - d["ex"][i+1,j] - d["ex"][i,j])
-      d["hz"][i,j] = d["hzx"][i,j] + d["hzy"][i,j]
-    end
-  end
+  update_hx!(d["hx"], d["ez"], p["half_cfl"]["y"])
+  update_hy!(d["hy"], d["ez"], p["half_cfl"]["x"])
+  update_hy!(d["hzx"], d["ey"], -p["half_cfl"]["x"])
+  update_hx!(d["hzy"], d["ex"], -p["half_cfl"]["y"])
+  d["hz"] = d["hzx"] + d["hzy"]
 end
 
 function output(d, k, p)
@@ -90,7 +119,7 @@ function run(init_params_dict)
     make_step!(data, params_dict)
     output(data, k, params_dict)
   end
-  return true
+  return data
 end
 
 end

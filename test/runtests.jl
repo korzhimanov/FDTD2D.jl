@@ -4,15 +4,15 @@ using Test
 # Test FDTD2D.calculate_params
 function laser_pulse_gauss(x_min, width, duration)
   function f(t, x, y)
-    return exp(-(y/width)^2)*exp(-((t - (x - x_min))/duration-2.0)^2)*sin(2.0*pi*(t - x))
+    return exp(-(y/width)^2)*exp(-((t - (x - x_min))/duration)^2)*sin(2.0*pi*(t - x))
   end
   return f
 end
 
 params_correct = Dict(
-  "x_bounds" => (0.0, 8.0),
+  "x_bounds" => (0.0, 12.0),
   "y_bounds" => (-4.0, 4.0),
-  "matrix_size" => Dict("x" => 64, "y" => 64),
+  "matrix_size" => Dict("x" => 96, "y" => 64),
   "time_steps" => 81,
 
   "output" => Dict(
@@ -25,7 +25,7 @@ params_correct["laser_pulse_z_shape"] = laser_pulse_gauss(params_correct["x_boun
 
 params_calculated = FDTD2D.calculate_params(params_correct)
 
-@test params_calculated["box_size"]["x"] == 8.0
+@test params_calculated["box_size"]["x"] == 12.0
 @test params_calculated["box_size"]["y"] == 8.0
 @test params_calculated["space_step"]["x"] == 0.125
 @test params_calculated["space_step"]["y"] == 0.125
@@ -47,4 +47,6 @@ for name in ("ex","ey","ezx","ezy","ez","hx","hy","hzx","hzy","hz")
   @test isequal(data_test,data_empty)
 end
 
-@time @test FDTD2D.run(params_correct) == true
+@time d = FDTD2D.run(params_correct)
+
+heatmap(d["ez"])
