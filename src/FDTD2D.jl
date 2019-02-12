@@ -19,13 +19,13 @@ function calculate_params(init_params::Dict)
   params["half_cfl"]["x"] = 0.5*params["time_step"]/params["space_step"]["x"]
   params["half_cfl"]["y"] = 0.5*params["time_step"]/params["space_step"]["y"]
 
-  params["y1"] = linspace(params["y_bounds"][1], params["y_bounds"][1] + (params["matrix_size"]["y"]-1.0) * params["space_step"]["y"], params["matrix_size"]["y"])
-  params["y2"] = linspace(params["y_bounds"][1]+0.5*params["y_bounds"][1], params["y_bounds"][1] + (params["matrix_size"]["y"]-1.5) * params["space_step"]["y"], params["matrix_size"]["y"]-1)
+  params["y1"] = range(params["y_bounds"][1], length=params["matrix_size"]["y"], step=params["space_step"]["y"]) |> collect
+  params["y2"] = range(params["y_bounds"][1]+0.5*params["space_step"]["y"], length=params["matrix_size"]["y"]-1, step=params["space_step"]["y"]) |> collect
 
   return params
 end
 
-""""Initialize data"""
+"""Initialize data"""
 function init_data(params::Dict)
   data = Dict{String, Array{Float64,2}}()
   for name in ("ex","ey","ezx","ezy","ez")
@@ -53,6 +53,7 @@ function generate_fields_x_min!(d::Dict, time::Float64, p::Dict)
   d["hz"][2,:] = d["hzx"][2,:] + d["hzy"][2,:]
 end
 
+"""Make step"""
 function make_step!(d::Dict, p::Dict)
   for j = 2:p["matrix_size"]["y"]-1
     for i = 2:p["matrix_size"]["x"]-1
