@@ -2,7 +2,7 @@ module FDTD2D
 export run
 
 """Calculate parameters needed for simulation and return them as a dictionary."""
-function calculate_params(init_params::Dict)
+function calculate_params(init_params)
   params = deepcopy(init_params)
 
   params["box_size"] = Dict{String,Float64}()
@@ -26,7 +26,7 @@ function calculate_params(init_params::Dict)
 end
 
 """Initialize data"""
-function init_data(params::Dict)
+function init_data(params)
   data = Dict{String, Array{Float64,2}}()
   for name in ("ex","ey","ezx","ezy","ez")
     data[name] = zeros(Float64, params["matrix_size"]["x"], params["matrix_size"]["y"])
@@ -38,7 +38,7 @@ function init_data(params::Dict)
 end
 
 """Generate fields at left boundary (x_min = p["x_bounds"][0]) at time moment 'time'"""
-function generate_fields_x_min!(d::Dict, time::Float64, p::Dict)
+function generate_fields_x_min!(d, time, p)
   for j = 1:p["matrix_size"]["y"]
     d["ey"][2,j] -= p["laser_pulse_y_shape"](time, p["x_bounds"][1] + p["space_step"]["x"], p["y1"][j])
     d["ezx"][2,j] -= p["laser_pulse_z_shape"](time, p["x_bounds"][1] + p["space_step"]["x"], p["y1"][j])
@@ -54,7 +54,7 @@ function generate_fields_x_min!(d::Dict, time::Float64, p::Dict)
 end
 
 """Make step"""
-function make_step!(d::Dict, p::Dict)
+function make_step!(d, p)
   for j = 2:p["matrix_size"]["y"]-1
     for i = 2:p["matrix_size"]["x"]-1
       d["ex"][i,j] += p["half_cfl"]["y"]*(d["hz"][i,j] + d["hz"][i-1,j] - d["hz"][i,j-1] - d["hz"][i-1,j-1])
@@ -76,12 +76,12 @@ function make_step!(d::Dict, p::Dict)
   end
 end
 
-function output(d::Dict, k::Int, p::Dict)
+function output(d, k, p)
   return true
 end
 
 """Run the simulations"""
-function run(init_params_dict::Dict)
+function run(init_params_dict)
   params_dict = calculate_params(init_params_dict)
   data = init_data(params_dict)
   for k = 1:params_dict["time_steps"]

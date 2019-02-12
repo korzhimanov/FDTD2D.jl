@@ -2,8 +2,7 @@ import Main.FDTD2D
 using Test
 
 # Test FDTD2D.calculate_params
-function laser_pulse_gauss(x_min::Float64, width::Float64, duration::Float64)
-  #function f(t::Float64, x::Float64, y::Array{FloatRange{Float64},1})
+function laser_pulse_gauss(x_min, width, duration)
   function f(t, x, y)
     return exp(-(y/width)^2)*exp(-((t - (x - x_min))/duration-2.0)^2)*sin(2.0*pi*(t - x))
   end
