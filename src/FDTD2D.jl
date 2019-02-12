@@ -1,5 +1,4 @@
 module FDTD2D
-using Plots
 export run
 
 """Calculate parameters needed for simulation and return them as a dictionary."""
@@ -40,16 +39,12 @@ end
 
 """Generate fields at left boundary (x_min = p["x_bounds"][0]) at time moment 'time'"""
 function generate_fields_x_min!(d, time, p)
-  for j = 1:p["matrix_size"]["y"]
-    d["ey"][2,j] -= p["laser_pulse_y_shape"](time, p["x_bounds"][1] + p["space_step"]["x"], p["y1"][j])
-    d["ezx"][2,j] -= p["laser_pulse_z_shape"](time, p["x_bounds"][1] + p["space_step"]["x"], p["y1"][j])
-  end
+  d["ey"][2,:] -= p["laser_pulse_y_shape"].(time, p["x_bounds"][1] + p["space_step"]["x"], p["y1"])
+  d["ezx"][2,:] -= p["laser_pulse_z_shape"].(time, p["x_bounds"][1] + p["space_step"]["x"], p["y1"])
 
-  for j = 1:p["matrix_size"]["y"]-1
-    d["hzx"][2,j] -= p["laser_pulse_y_shape"](time + 0.5*p["time_step"], p["x_bounds"][1] + 1.5*p["space_step"]["x"], p["y2"][j])
-    d["hy"][2,j] -= p["laser_pulse_z_shape"](time + 0.5*p["time_step"], p["x_bounds"][1] + 1.5*p["space_step"]["x"], p["y2"][j])
-  end
-
+  d["hzx"][2,:] -= p["laser_pulse_y_shape"].(time + 0.5*p["time_step"], p["x_bounds"][1] + 1.5*p["space_step"]["x"], p["y2"])
+  d["hy"][2,:] -= p["laser_pulse_z_shape"].(time + 0.5*p["time_step"], p["x_bounds"][1] + 1.5*p["space_step"]["x"], p["y2"])
+  
   d["ez"][2,:] = d["ezx"][2,:] + d["ezy"][2,:]
   d["hz"][2,:] = d["hzx"][2,:] + d["hzy"][2,:]
 end

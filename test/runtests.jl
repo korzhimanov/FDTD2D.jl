@@ -1,10 +1,11 @@
 import Main.FDTD2D
+using Plots
 using Test
 
 # Test FDTD2D.calculate_params
 function laser_pulse_gauss(x_min, width, duration)
   function f(t, x, y)
-    return exp(-(y/width)^2)*exp(-((t - (x - x_min))/duration)^2)*sin(2.0*pi*(t - x))
+    return exp(-(y/width)^2)*exp(-((t - (x - x_min) - duration)/duration)^2)*sin(2.0*pi*(t - x))
   end
   return f
 end
