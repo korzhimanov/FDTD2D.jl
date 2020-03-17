@@ -1,4 +1,5 @@
-import Main.FDTD2D
+include("../src/FDTD2D.jl")
+import .FDTD2D
 using Plots
 using Test
 
@@ -26,13 +27,15 @@ params_correct["laser_pulse_z_shape"] = laser_pulse_gauss(params_correct["x_boun
 
 params_calculated = FDTD2D.calculate_params(params_correct)
 
-@test params_calculated["box_size"]["x"] == 12.0
-@test params_calculated["box_size"]["y"] == 8.0
-@test params_calculated["space_step"]["x"] == 0.125
-@test params_calculated["space_step"]["y"] == 0.125
-@test params_calculated["time_step"] == sqrt(2.0)/16.0
-@test params_calculated["half_cfl"]["x"] == 0.5*sqrt(0.5)
-@test params_calculated["half_cfl"]["y"] == 0.5*sqrt(0.5)
+@testset "Calculation of parameters" begin
+    @test params_calculated["box_size"]["x"] == 12.0
+    @test params_calculated["box_size"]["y"] == 8.0
+    @test params_calculated["space_step"]["x"] == 0.125
+    @test params_calculated["space_step"]["y"] == 0.125
+    @test params_calculated["time_step"] == sqrt(2.0)/16.0
+    @test params_calculated["half_cfl"]["x"] == 0.5*sqrt(0.5)
+    @test params_calculated["half_cfl"]["y"] == 0.5*sqrt(0.5)
+end
 
 # Test FDTD2D.init_data
 data_empty = Dict()
@@ -44,9 +47,7 @@ for name in ("hx","hy","hzx","hzy","hz")
 end
 
 data_test = FDTD2D.init_data(params_calculated)
-for name in ("ex","ey","ezx","ezy","ez","hx","hy","hzx","hzy","hz")
-  @test isequal(data_test,data_empty)
-end
+@test isequal(data_test,data_empty)
 
 @time d = FDTD2D.run(params_correct)
 
